@@ -185,22 +185,17 @@ def testWahlen():
         y=resCDU,
         c="blue")
 
-    # Add titles (main and on axis)
-    # plt.yscale('log')
-    plt.xlabel("Date")
-    plt.ylabel("CDU Umfragewerte")
     plt.title("CDU Umfragewerte")
     plt.xticks(rotation=90)
     plt.xticks([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20,
                 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60])
     plt.show()
+
     plt.scatter(
         x=resDate,
         y=resDeath,
-        c="blue")
-    plt.xlabel("Date")
-    plt.ylabel("Covid Deaths")
-    plt.title("Deaths")
+        c="red")
+    plt.title("Corona Inzidenzen")
     plt.xticks(rotation=90)
     plt.xticks([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20,
                 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60])
@@ -210,10 +205,8 @@ def testWahlen():
     plt.scatter(
         x=resDate,
         y=resSPD,
-        c="blue")
-    plt.xlabel("Date")
-    plt.ylabel("spd")
-    plt.title("Deaths")
+        c="green")
+    plt.title("SPD Umfragewerte")
     plt.xticks(rotation=90)
     plt.xticks([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20,
                 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60])

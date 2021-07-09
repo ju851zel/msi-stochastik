@@ -3,7 +3,10 @@ import json
 import matplotlib.pyplot as plt
 import plotly.express as px
 import re
+from scipy.ndimage.filters import gaussian_filter1d
+
 import numpy as np
+from klausur import *
 
 
 def pretty_print(pretty_print_content):
@@ -32,7 +35,6 @@ def basic_data():
 
     planet_population = []
     planet_diameter = []
-    planets
     planet_gravity = []
     planet_names = []
     planet_orbital = []
@@ -65,7 +67,7 @@ def basic_data():
     plt.show()
 
 
-def test():
+def testShips():
     # welche imperialen raumschiffe
     # welche schiffe transportieren am meisten passagiere mit kleiner crew am günstigsten
     page = 1
@@ -179,6 +181,8 @@ def testWahlen():
     resDeath.reverse()
     resSPD.reverse()
     pretty_print(resDate)
+
+    print(np.corrcoef(resCDU, resDeath, 1))
     # Scatterplot
     plt.scatter(
         x=resDate,
@@ -214,4 +218,188 @@ def testWahlen():
     plt.show()
 
 
-testWahlen()
+def tendierenumfrageinstitute():
+    ships = []
+    res = requests.get(f"https://api.dawum.de").content
+    res = json.loads(res)
+    parliaments = res["Parliaments"]
+    institutes = res["Institutes"]
+    parties = res["Parties"]
+    surveys = res["Surveys"]
+
+    bundestagsumfragen = {}
+    for survey in surveys.values():
+        if survey["Parliament_ID"] == "0":  # bawue
+            if survey["Institute_ID"] not in bundestagsumfragen:
+                bundestagsumfragen[survey["Institute_ID"]] = []
+            bundestagsumfragen[survey["Institute_ID"]].append(survey)
+    # for kay, value in bundestagsumfragen.items():
+    #     pretty_print(f"{kay, len(value) }")
+
+    # surveys = bundestagsumfragen["2"]
+
+    # pretty_print(bundestagsumfragen)
+    data = []
+    for value in bundestagsumfragen.values():
+        for entry in value:
+            if "2020" in entry["Date"]:
+                data.append({
+                    "date": entry["Date"],
+                    "inst": int(entry["Institute_ID"]),
+                    "cdu": entry["Results"]["1"],
+                    "spd": entry["Results"]["2"],
+                    "fdp": entry["Results"]["3"],
+                    "grune": entry["Results"]["4"],
+                    "linke": entry["Results"]["5"],
+                    "afd": entry["Results"]["7"],
+                })
+            pass
+    ergebnis = {}
+    for value in data:
+        if value["inst"] not in ergebnis:
+            ergebnis[value["inst"]] = []
+        ergebnis[value["inst"]].append(value)
+
+    x = []
+    for key in ergebnis.keys():
+        dates = []
+        grune = []
+        for entry in ergebnis[key]:
+            dates.append(entry["date"][0:7])
+            grune.append(entry["fdp"])  # here
+        x.append((dates, grune))
+
+    pretty_print(x)
+    fig, ax = plt.subplots()
+    i = 0
+    for entry in range(0, len(x), 1):
+        if len(x[entry][0]) >= 12:
+            ax.scatter(x[entry][0], x[entry][1], label=institutes[str(list(ergebnis.keys())[i])]["Name"], alpha=1)
+        i = i + 1
+
+    print(i)
+    ax.legend()
+    # plt.scatter(datum, grune)
+    plt.xticks(rotation=90)
+    plt.xticks(range(0, 13, 1))
+
+    # plt.ylabel('cdu werte')
+    # plt.xlabel('datum')
+    # plt.grid(True)
+    # plt.ticklabel_format(useOffset=False, style='plain')
+    #
+    # plt.autoscale()
+    # plt.yticks(planet_population,
+    #            planet_names)
+    plt.show()
+
+
+def varianzParteien():
+    ships = []
+    res = requests.get(f"https://api.dawum.de").content
+    res = json.loads(res)
+    parliaments = res["Parliaments"]
+    institutes = res["Institutes"]
+    parties = res["Parties"]
+    surveys = res["Surveys"]
+
+    bundestagsumfragen = {}
+    for survey in surveys.values():
+        if survey["Parliament_ID"] == "0":  # bawue
+            if survey["Institute_ID"] not in bundestagsumfragen:
+                bundestagsumfragen[survey["Institute_ID"]] = []
+            bundestagsumfragen[survey["Institute_ID"]].append(survey)
+    # for kay, value in bundestagsumfragen.items():
+    #     pretty_print(f"{kay, len(value) }")
+
+    # surveys = bundestagsumfragen["2"]
+
+    # pretty_print(bundestagsumfragen)
+    data = []
+    for value in bundestagsumfragen.values():
+        for entry in value:
+            if "2020" in entry["Date"]:
+                data.append({
+                    "date": entry["Date"],
+                    "inst": int(entry["Institute_ID"]),
+                    "cdu": entry["Results"]["1"],
+                    "spd": entry["Results"]["2"],
+                    "fdp": entry["Results"]["3"],
+                    "grune": entry["Results"]["4"],
+                    "linke": entry["Results"]["5"],
+                    "afd": entry["Results"]["7"],
+                })
+            pass
+    ergebnis = {}
+    for value in data:
+        if value["inst"] not in ergebnis:
+            ergebnis[value["inst"]] = []
+        ergebnis[value["inst"]].append(value)
+
+    x = []
+    for key in ergebnis.keys():
+        dates = []
+        grune = []
+        for entry in ergebnis[key]:
+            dates.append(entry["date"][0:7])
+            grune.append(entry["linke"])  # here
+        x.append({"dates": dates, "grune": grune})
+
+    forsa = x[0]
+    data = {}
+    for i in range(0, len(forsa["dates"]), 1):
+        if forsa["dates"][i] not in data:
+            data[forsa["dates"][i]] = []
+        data[forsa["dates"][i]].append(forsa["grune"][i])
+
+    for date, values in data.copy().items():
+        data[date] = {
+            "values": values,
+            "avg": mittelwert(values),
+            "max": max(values),
+            "min": min(values),
+            "var": varianz(values)
+        }
+
+    # pretty_print(forsa)
+
+    fig, ax = plt.subplots()
+
+    dates = list(data.keys())
+    entries = list(data.items())
+    values = list(data.values())
+    avgs = list(map(lambda x: x["avg"], values))
+    mins = list(map(lambda x: x["min"], values))
+    maxs = list(map(lambda x: x["max"], values))
+    varsPos = list(map(lambda x: x["var"] + x["avg"], values))
+    varsNeg = list(map(lambda x: -x["var"] + x["avg"], values))
+    # ax.plot(dates, mins)
+    # ax.plot(dates, maxs)
+
+
+    print(max(avgs)-min(avgs))
+
+
+    ax.plot(dates, avgs)
+    ax.plot(dates, varsPos)
+    ax.plot(dates, varsNeg)
+    # ax.scatter( forsa["dates"], forsa["grune"])
+
+
+
+    plt.xticks(rotation=90)
+    plt.xticks(range(0, 13, 1))
+
+    # plt.scatter(datum, grune)
+    # plt.ylabel('cdu werte')
+    # plt.xlabel('datum')
+    # plt.grid(True)
+    # plt.ticklabel_format(useOffset=False, style='plain')
+    #
+    # plt.autoscale()
+    # plt.yticks(planet_population,
+    #            planet_names)
+    plt.show()
+
+
+testShips()

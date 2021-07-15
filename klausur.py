@@ -13,6 +13,17 @@ from scipy.stats import binom
 from scipy.stats import geom
 from scipy.stats import hypergeom
 from scipy.stats import poisson
+from scipy.stats import norm
+from scipy.stats import expon
+from scipy.stats import uniform
+from scipy.integrate import quad
+
+
+########README#########
+# Das aktuellste File liegt hier:
+# https://github.com/ju851zel/msi-stochastik
+# Das file das hier hochgeladen wurde ist die aktuellste Version stand 14.07.2021.
+# Im Zweifel soll aber immer die auf Github gelten.
 
 
 def pretty_print(pretty_print_content):
@@ -40,7 +51,12 @@ def regression(a, b):
     plt.show()
 
 
-def absoluteHaufigkeit(array):
+######## Absolute Haufigkeit ########
+# [3, 4, 5, 1, 5, 2, 1, 3, 1, 3]
+def absHauf(array): __absoluteHaufigkeit(array)
+
+
+def __absoluteHaufigkeit(array):
     res = {}
     absolut = {}
     for item in array:
@@ -59,7 +75,12 @@ def absoluteHaufigkeit(array):
     return absolut
 
 
-def relativeHaufigkeit(array):
+######## Relative Haufigkeit ########
+# [3, 4, 5, 1, 5, 2, 1, 3, 1, 3]
+def relHauf(array): __relativeHaufigkeit(array)
+
+
+def __relativeHaufigkeit(array):
     res = {}
     relative = {}
     for item in array:
@@ -76,28 +97,6 @@ def relativeHaufigkeit(array):
     print("Relative Haufigkeiten: ")
     pretty_print(relative)
     return relative
-
-
-def empirscheVerteilungsfunktionDraw(array):
-    y = []
-    array = np.array(array)
-    for i in array:
-        y += [len(array[array <= i]) / len(array)]
-    y = np.array(y)
-    xs = list(set(array))
-    ys = list(set(y))
-    ys, xs = zip(*sorted(zip(ys, xs)))
-    plt.bar(xs, ys)
-    plt.ylabel('Wahrscheinlichkeit')
-    plt.xlabel('nums')
-    plt.grid(True)
-    plt.show()
-    res = {}
-    j = 0
-    for i in xs:
-        res[i] = ys[j]
-        j += 1
-    return res
 
 
 def mittelwert(array):
@@ -125,6 +124,7 @@ def modal(array):
     return x
 
 
+# [1.3, 5.0, 1.3, 2.7, 4.0, 3.7], percentile=50
 def pQuantil(array, percentile):
     res = 0
     array = sorted(array)
@@ -146,6 +146,10 @@ def empirischNminus1Varianz(array):
     return x
 
 
+def emp_stdw(array):
+    return empirischeNminus1Standardabweichung(array)
+
+
 def empirischeNminus1Standardabweichung(array):
     # n-1
     x = np.std(array, ddof=1)
@@ -153,6 +157,13 @@ def empirischeNminus1Standardabweichung(array):
     return x
 
 
+# echte Werte[1, 1, 1, 1, 2, 2, 2, 3]
+def diskreteVarianz1(array):
+    x, weights = valuesToValAndArray(array)
+    diskreteVarianz(x, weights)
+
+
+# xi= [1, 2, 3], weights=[0.5, 0.125, 0.375]
 def diskreteVarianz(array, weights):
     # n
     x = statsmodels.stats.weightstats.DescrStatsW(array, weights=weights, ddof=0).var
@@ -160,6 +171,25 @@ def diskreteVarianz(array, weights):
     return x
 
 
+def valuesToValAndArray(array):
+    res = {}
+    relative = {}
+    for item in array:
+        if item not in res.keys():
+            res[item] = 0
+        res[item] = res[item] + 1
+    for key, val in res.items():
+        relative[key] = val / len(array)
+    return list(relative.keys()), list(relative.values())
+
+
+# echte Werte[1, 1, 1, 1, 2, 2, 2, 3]
+def diskreteErwartungswert1(array):
+    x, weights = valuesToValAndArray(array)
+    diskreteErwartungswert(x, weights)
+
+
+# xi= [1, 2, 3], weights=[0.5, 0.125, 0.375]
 def diskreteErwartungswert(array, weights):
     # n
     x = np.average(array, weights=weights)
@@ -167,6 +197,13 @@ def diskreteErwartungswert(array, weights):
     return x
 
 
+# echte Werte[1, 1, 1, 1, 2, 2, 2, 3]
+def diskreteStandardabweichung1(array):
+    x, weights = valuesToValAndArray(array)
+    diskreteStandardabweichung(x, weights)
+
+
+# xi= [1, 2, 3], weights=[0.5, 0.125, 0.375]
 def diskreteStandardabweichung(array, weights):
     # n
     x = statsmodels.stats.weightstats.DescrStatsW(array, weights=weights, ddof=0).std
@@ -209,15 +246,41 @@ def empirischeKovarianz(a, b):
     print("empirischer kovarianz ", np.cov(data, bias=True))
 
 
+######## Empirische Verteilungsfunktion ########
 # CFD cumulative distribution function
-def empirischeVerteilungsfunktion(a, b):
-    data = np.array([a, b])
+# [3, 4, 5, 1, 5, 2, 1, 3, 1, 3]
+def empirischeVerteilungsfunktion(data):
+    relative = __relativeHaufigkeit(data)
+    keys = []
+    vals = []
+    for key, val in relative.items():
+        keys.append(key)
+        vals.append(val)
+
+    data_sorted = np.sort(data)
+    p = 1. * np.arange(len(data)) / (len(data) - 1)
+    fig = plt.figure()
+    ax1 = fig.add_subplot(121)
+    ax1.plot(p, data_sorted)
+    ax1.set_xlabel('$p$')
+    ax1.set_ylabel('$x$')
+
+    ax2 = fig.add_subplot(122)
+    ax2.plot(data_sorted, p)
+    ax2.set_xlabel('$x$')
+    ax2.set_ylabel('$p$')
+    plt.grid()
+    plt.show()
     print("empirischer Verteilungsfunktion ", np.cumsum(data))
 
 
 # CFD cumulative distribution function
 def kde(a, b):
     pass  # todo
+
+
+def bin_vert(n, p, array, verteilung=False):
+    binomial_verteilung(n, p, array, verteilung)
 
 
 def binomial_verteilung(n, p, array, verteilung=False):
@@ -238,6 +301,10 @@ def binomial_verteilung(n, p, array, verteilung=False):
     print("Wölbung", kurt)
 
 
+def hyp_geom_vert(array, nStichprobe, elementeMitEigenschaftM, elementeN):
+    hyper_geometrisch_verteilung(array, nStichprobe, elementeMitEigenschaftM, elementeN)
+
+
 def hyper_geometrisch_verteilung(array, nStichprobe, elementeMitEigenschaftM, elementeN):
     mean, var, skew, kurt = hypergeom.stats(elementeN, nStichprobe, elementeMitEigenschaftM, moments='mvsk')
     sum = 0
@@ -251,7 +318,11 @@ def hyper_geometrisch_verteilung(array, nStichprobe, elementeMitEigenschaftM, el
     # print("Wahrsch: Aus", nElements, "Elementen, wovon", mEigenschaft, "eine Eigenschaft haben", kZiehen, "zu ziehen: ",
 
 
-def geometrisch_verteilung(p, array):
+def geom_vert(p, array, quantil=None):
+    geometrisch_verteilung(p, array, quantil)
+
+
+def geometrisch_verteilung(p, array, quantil=None):
     mean, var, skew, kurt = geom.stats(p, moments='mvsk')
     sum = 0
     for i in array:
@@ -261,9 +332,15 @@ def geometrisch_verteilung(p, array):
     print("Varianz", var)
     print("Schiefe", skew)
     print("Wölbung", kurt)
+    if quantil is not None:
+        print("p Quantil", scipy.stats.distributions.geom(p).ppf(quantil))
 
 
-def poisson_verteilung(array, rate):
+def pois_vert(rate, array):
+    poisson_verteilung(rate, array)
+
+
+def poisson_verteilung(rate, array):
     mean, var, skew, kurt = poisson.stats(rate, moments='mvsk')
 
     sum = 0
@@ -274,6 +351,65 @@ def poisson_verteilung(array, rate):
     print("Varianz", var)
     print("Schiefe", skew)
     print("Wölbung", kurt)
+
+
+def stet_gleich_vert(min, max, x, quantil=None):
+    stetige_gleich_verteilung(min, max, x, quantil)
+
+
+def stetige_gleich_verteilung(min, max, x, quantil=None):
+    Verteilungsdichte = norm(min, max).pdf(x)
+    Verteilungsfunktion = norm(min, max).cdf(x)
+    erwartungswert = norm(min, max).expect()
+    variance = norm(min, max).var()
+
+    print("Verteilungsdichte", Verteilungsdichte)
+    print("Wahrscheinlichkeit fur x < ", x, ":", Verteilungsfunktion)
+    print("Verteilungsfunktion", Verteilungsfunktion)
+    if quantil is not None:
+        print("p-Quantil", norm(min, max).ppf(quantil))
+    print("Erwartungswert", erwartungswert)
+    print("Variance", variance)
+    print("Standardabweichung", np.sqrt(variance))
+
+
+def stet_exp_vert(rate, x, quantil=None):
+    stetige_exponential_verteilung(rate, x, quantil)
+
+
+def stetige_exponential_verteilung(rate, x, quantil=None):
+    Verteilungsdichte = expon(scale=rate).pdf(x)
+    Verteilungsfunktion = expon(scale=rate).cdf(x)
+    erwartungswert = expon(scale=rate).expect()
+    variance = expon(scale=rate).var()
+
+    print("Verteilungsdichte", Verteilungsdichte)
+    print("Wahrscheinlichkeit fur x < ", x, ":", Verteilungsfunktion)
+    print("Verteilungsfunktion", Verteilungsfunktion)
+    if quantil is not None:
+        print("p-Quantil", expon(scale=rate).ppf(quantil))
+    print("Erwartungswert", erwartungswert)
+    print("Variance", variance)
+    print("Standardabweichung", np.sqrt(variance))
+
+
+def ste_nor_vert(mu, sigma, x, quantil=None):
+    stetige_normal_verteilung(mu, sigma, x, quantil)
+
+
+def stetige_normal_verteilung(mu, sigma, x, quantil=None):
+    Verteilungsdichte = norm(mu, sigma).pdf(x)
+    Verteilungsfunktion = norm(mu, sigma).cdf(x)
+    erwartungswert = norm(mu, sigma).expect()
+    variance = norm(mu, sigma).var()
+    print("Verteilungsdichte", Verteilungsdichte)
+    print("Wahrscheinlichkeit fur x < ", x, ":", Verteilungsfunktion)
+    print("Verteilungsfunktion", Verteilungsfunktion)
+    if quantil is not None:
+        print("p-Quantil", norm(mu, sigma).ppf(quantil))
+    print("Erwartungswert", erwartungswert)
+    print("Variance", variance)
+    print("Standardabweichung", np.sqrt(variance))
 
 
 # TESTS############################

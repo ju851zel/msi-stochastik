@@ -8,7 +8,4 @@ if __name__ == '__main__':
     # klausur.hyper_geometrisch_verteilung([0], 10, 20, 120)
     # klausur.relHauf(val)
     # klausur.empirischeKorrellationsKoeffizient([2.0, 3.0, 1.0, 2.0, 1.0, 2.7],val)
-    attr = [8, 7, 5, 10, 6, 3, 9, 7]
-    gehalt = [55, 60, 40, 70, 45, 40, 65, 55]
-    inter = [3, 10, 9, 1, 5, 10, 2, 3]
-    klausur.empirischeKorrellationsKoeffizient(attr,gehalt)
+    klausur.ste_nor_vert(130,15,)
